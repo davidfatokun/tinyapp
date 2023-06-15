@@ -34,8 +34,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-    let templateVars = {};
-    templateVars[req.params.id] = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"] };
+    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"] };
     res.render("urls_show", templateVars);
 });
 
