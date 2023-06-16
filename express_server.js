@@ -36,14 +36,22 @@ app.get("/urls", (req, res) => {
 })
 
 app.post("/urls", (req, res) => {
-    let charCodes = generateRandomString().toString();
-    urlDatabase[charCodes] = req.body.longURL.toString();
-    res.redirect("/urls/" + charCodes); // Respond with 'Ok' (we will replace this)
+    if (req.cookies["user_id"]) {
+        let charCodes = generateRandomString().toString();
+        urlDatabase[charCodes] = req.body.longURL.toString();
+        res.redirect("/urls/" + charCodes); // Respond with 'Ok' (we will replace this)
+    } else {
+        res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');;
+    }
 });
 
 app.get("/urls/new", (req, res) => {
-    const templateVars = {user: users[req.cookies["user_id"]]};
-    res.render("urls_new", templateVars);
+    if (req.cookies["user_id"]) {
+        const templateVars = {user: users[req.cookies["user_id"]]};
+        res.render("urls_new", templateVars);
+    } else {
+        res.redirect("/login");
+    }
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -63,7 +71,11 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
     const longURL = urlDatabase[req.params.id];
-    res.redirect(longURL);
+    if(longURL === undefined){
+        res.status(400).send('No such short url in database');
+    } else {
+        res.redirect(longURL);
+    }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -71,8 +83,12 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-    const templateVars = {user: users[req.cookies["user_id"]]};
-    res.render("urls_register", templateVars);
+    if (req.cookies["user_id"]) {
+        res.redirect("/urls");
+    } else {
+        const templateVars = {user: users[req.cookies["user_id"]]};
+        res.render("urls_register", templateVars);
+    }
 });
 
 app.post("/register", (req, res) => {
@@ -90,8 +106,12 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    const templateVars = {user: users[req.cookies["user_id"]]};
-    res.render("urls_login", templateVars);
+    if (req.cookies["user_id"]) {
+        res.redirect("/urls");
+    } else {
+        const templateVars = {user: users[req.cookies["user_id"]]};
+        res.render("urls_login", templateVars);
+    }
 });
 
 app.post("/login", (req, res) => {
