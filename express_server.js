@@ -68,7 +68,8 @@ app.post("/urls", (req, res) => {
         urlDatabase[urlID] = {longURL: req.body.longURL.toString(), userID: req.session["user_id"]};
         res.redirect("/urls/" + urlID);
     } else {
-        res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');;
+        res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');
+
     }
 });
 
@@ -85,10 +86,14 @@ app.get("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
-        if(userUrlKeys.includes(req.params.id)){
-            const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]["longURL"], user: users[req.session["user_id"]]};
+        if (userUrlKeys.includes(req.params.id)) {
+            const templateVars = {
+                id: req.params.id,
+                longURL: urlDatabase[req.params.id]["longURL"],
+                user: users[req.session["user_id"]]
+            };
             res.render("urls_show", templateVars);
-        } else if(!allKeys.includes(req.params.id)){
+        } else if (!allKeys.includes(req.params.id)) {
             res.status(400).send('A Link With This Short Url Does Not Exist');
         } else {
             res.status(400).send('You Dont Have Access to This Link Because You Dont Own It');
@@ -102,10 +107,10 @@ app.post("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
-        if(userUrlKeys.includes(req.params.id)){
+        if (userUrlKeys.includes(req.params.id)) {
             urlDatabase[req.params.id]["longURL"] = req.body.longURL.toString();
             res.redirect("/urls");
-        } else if(!allKeys.includes(req.params.id)){
+        } else if (!allKeys.includes(req.params.id)) {
             res.status(400).send('A Link With This Short Url Does Not Exist');
         } else {
             res.status(400).send('You Dont Have Access to This Link Because You Dont Own It');
@@ -119,10 +124,10 @@ app.post("/urls/:id/delete", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
-        if(userUrlKeys.includes(req.params.id)){
+        if (userUrlKeys.includes(req.params.id)) {
             delete urlDatabase[req.params.id];
             res.redirect("/urls");
-        } else if(!allKeys.includes(req.params.id)){
+        } else if (!allKeys.includes(req.params.id)) {
             res.status(400).send('A Link With This Short Url Does Not Exist');
         } else {
             res.status(400).send('You Dont Have Access to This Link Because You Dont Own It');
@@ -134,7 +139,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
     const longURL = urlDatabase[req.params.id]["longURL"];
-    if(longURL === undefined){
+    if (longURL === undefined) {
         res.status(400).send('No such short url in database');
     } else {
         res.redirect(longURL);
