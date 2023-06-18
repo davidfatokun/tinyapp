@@ -66,7 +66,7 @@ app.post("/urls", (req, res) => {
     if (req.session["user_id"]) {
         let urlID = generateRandomString().toString();
         urlDatabase[urlID] = {longURL: req.body.longURL.toString(), userID: req.session["user_id"]};
-        res.redirect("/urls/" + urlID); // Respond with 'Ok' (we will replace this)
+        res.redirect("/urls/" + urlID);
     } else {
         res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');;
     }
@@ -164,7 +164,7 @@ app.post("/register", (req, res) => {
         let id = generateRandomString();
         const hashedPassword = bcrypt.hashSync(req.body.password, 10);
         users[id] = {"id": id, "email": req.body.email, "password": hashedPassword};
-        req.session["user_id"] = user["id"];
+        req.session["user_id"] = users[id]["id"];
         res.redirect("/urls");
     }
 });
