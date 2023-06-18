@@ -190,7 +190,9 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-    res.clearCookie("user_id")
+    res.clearCookie("session");
+    res.clearCookie("session.sig");
+    res.clearCookie("JSESSIONID");
     res.redirect("/login");
 });
 
