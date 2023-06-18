@@ -1,3 +1,4 @@
+const {getUserByEmail, urlsForId, generateRandomString} = require("./helpers");
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
@@ -52,7 +53,7 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
     if (req.session["user_id"]) {
-        let urlData = urlsForId(req.session["user_id"])
+        let urlData = urlsForId(req.session["user_id"], urlDatabase)
         const templateVars = {urls: urlData, user: users[req.session["user_id"]]};
         res.render("urls_index", templateVars);
     } else {
@@ -82,7 +83,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
             const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]["longURL"], user: users[req.session["user_id"]]};
@@ -99,7 +100,7 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
             urlDatabase[req.params.id]["longURL"] = req.body.longURL.toString();
@@ -116,7 +117,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
     if (req.session["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
             delete urlDatabase[req.params.id];
@@ -154,7 +155,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-    let user = getUserByEmail(req.body.email);
+    let user = getUserByEmail(req.body.email, users);
     if (req.body.email === "" || req.body.password === "") {
         res.status(400).send('Invalid email or password');
     } else if (user) {
@@ -178,7 +179,7 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-    let user = getUserByEmail(req.body.email);
+    let user = getUserByEmail(req.body.email, users);
     if (req.body.email === "" || req.body.password === "") {
         res.status(400).send('Invalid email or password');
     } else if (user && bcrypt.compareSync(req.body.password, user["password"])) {
@@ -212,31 +213,3 @@ app.get("/fetch", (req, res) => {
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
 });
-
-function getUserByEmail(email) {
-    for (const id in users) {
-        if (email === users[id]["email"]) {
-            return users[id];
-        }
-    }
-    return null;
-}
-
-function urlsForId(userId) {
-    let urlData = {};
-    for (const urlId in urlDatabase) {
-        if (userId === urlDatabase[urlId]["userID"]) {
-            urlData[urlId] = urlDatabase[urlId];
-        }
-    }
-    return urlData;
-}
-
-function generateRandomString() {
-    let charCodes = '';
-    const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    for (let i = 0; i < 6; i++) {
-        charCodes += characters[Math.floor(Math.random() * characters.length)];
-    }
-    return charCodes;
-}
