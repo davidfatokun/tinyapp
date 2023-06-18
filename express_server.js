@@ -69,7 +69,6 @@ app.post("/urls", (req, res) => {
         res.redirect("/urls/" + urlID);
     } else {
         res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');
-
     }
 });
 
