@@ -4,11 +4,11 @@ const {getUserByEmail, urlsForId, generateRandomString} = require('../helpers');
 
 let testUrlDatabase = {
     "X7buRT": {
-        longURL: "http://www.lighthouselabs.ca",
+        longURL: "https://www.lighthouselabs.ca",
         userID: "b2xVn2",
     },
     "GuXP9r": {
-        longURL: "http://www.google.ca",
+        longURL: "https://www.google.ca",
         userID: "9sm5xK",
     },
     "b6UTxQ": {
