@@ -47,6 +47,12 @@ describe('getUserByEmail', function () {
         assert.deepEqual(actualUser["email"], expectedUser["email"]);
         assert.deepEqual(actualUser["password"], expectedUser["password"]);
     });
+
+    it('should return null for email that is not registered to a user', function () {
+        const actualUser = getUserByEmail("user3@example.com", testUsers)
+        const expectedUser = null;
+        assert.deepEqual(actualUser, expectedUser);
+    });
 });
 
 describe('urlsForId', function () {
@@ -72,6 +78,13 @@ describe('urlsForId', function () {
             assert.deepEqual(actualUrl["userID"], expectedUrl["userID"]);
         }
 
+    });
+    it('should return no urls created by this user', function () {
+        const actualUrls = urlsForId("Hrx6v4", testUrlDatabase)
+        const expectedUrls = {};
+        let actualIds = Object.keys(actualUrls);
+        let expectedIds = Object.keys(expectedUrls);
+        assert.deepEqual(actualIds.length, expectedIds.length);
     });
 });
 
