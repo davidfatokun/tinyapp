@@ -52,7 +52,6 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
     if (req.session["user_id"]) {
-        console.log(req.session["user_id"]);
         let urlData = urlsForId(req.session["user_id"])
         const templateVars = {urls: urlData, user: users[req.session["user_id"]]};
         res.render("urls_index", templateVars);
