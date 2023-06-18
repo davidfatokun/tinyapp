@@ -1,5 +1,4 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const app = express();
@@ -8,10 +7,8 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({extended: true}));
-app.use(cookieParser());
-app.use(cookieSession());
 
-const urlDatabase = {
+let urlDatabase = {
     "X7buRT": {
         longURL: "http://www.lighthouselabs.ca",
         userID: "b2xVn2",
@@ -43,14 +40,21 @@ let users = {
     },
 };
 
+let secretKeys = Object.keys(users);
+app.use(cookieSession({
+    name: 'session',
+    keys: secretKeys,
+}));
+
 app.get("/", (req, res) => {
     res.send("Hello!");
 });
 
 app.get("/urls", (req, res) => {
-    if (req.cookies["user_id"]) {
-        let urlData = urlsForId(req.cookies["user_id"])
-        const templateVars = {urls: urlData, user: users[req.cookies["user_id"]]};
+    if (req.session["user_id"]) {
+        console.log(req.session["user_id"]);
+        let urlData = urlsForId(req.session["user_id"])
+        const templateVars = {urls: urlData, user: users[req.session["user_id"]]};
         res.render("urls_index", templateVars);
     } else {
         res.status(400).send('You Dont Have Access to the Data In This Link Without Being Logged In');
@@ -59,9 +63,9 @@ app.get("/urls", (req, res) => {
 })
 
 app.post("/urls", (req, res) => {
-    if (req.cookies["user_id"]) {
+    if (req.session["user_id"]) {
         let urlID = generateRandomString().toString();
-        urlDatabase[urlID] = {longURL: req.body.longURL.toString(), userID: req.cookies["user_id"]};
+        urlDatabase[urlID] = {longURL: req.body.longURL.toString(), userID: req.session["user_id"]};
         res.redirect("/urls/" + urlID); // Respond with 'Ok' (we will replace this)
     } else {
         res.status(400).send('Unable to Complete Request Because You Dont Have Privilege to Create New Links Without Being Logged In');;
@@ -69,8 +73,8 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-    if (req.cookies["user_id"]) {
-        const templateVars = {user: users[req.cookies["user_id"]]};
+    if (req.session["user_id"]) {
+        const templateVars = {user: users[req.session["user_id"]]};
         res.render("urls_new", templateVars);
     } else {
         res.redirect("/login");
@@ -78,11 +82,11 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-    if (req.cookies["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.cookies["user_id"]));
+    if (req.session["user_id"]) {
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
-            const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]["longURL"], user: users[req.cookies["user_id"]]};
+            const templateVars = {id: req.params.id, longURL: urlDatabase[req.params.id]["longURL"], user: users[req.session["user_id"]]};
             res.render("urls_show", templateVars);
         } else if(!allKeys.includes(req.params.id)){
             res.status(400).send('A Link With This Short Url Does Not Exist');
@@ -95,8 +99,8 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-    if (req.cookies["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.cookies["user_id"]));
+    if (req.session["user_id"]) {
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
             urlDatabase[req.params.id]["longURL"] = req.body.longURL.toString();
@@ -112,8 +116,8 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-    if (req.cookies["user_id"]) {
-        let userUrlKeys = Object.keys(urlsForId(req.cookies["user_id"]));
+    if (req.session["user_id"]) {
+        let userUrlKeys = Object.keys(urlsForId(req.session["user_id"]));
         let allKeys = Object.keys(urlDatabase);
         if(userUrlKeys.includes(req.params.id)){
             delete urlDatabase[req.params.id];
@@ -142,10 +146,10 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-    if (req.cookies["user_id"]) {
+    if (req.session["user_id"]) {
         res.redirect("/urls");
     } else {
-        const templateVars = {user: users[req.cookies["user_id"]]};
+        const templateVars = {user: users[req.session["user_id"]]};
         res.render("urls_register", templateVars);
     }
 });
@@ -158,20 +162,18 @@ app.post("/register", (req, res) => {
         res.status(400).send('Email is already registered');
     } else {
         let id = generateRandomString();
-        console.log(req.body.password);
         const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-        console.log(hashedPassword);
         users[id] = {"id": id, "email": req.body.email, "password": hashedPassword};
-        res.cookie("user_id", users[id]["id"]);
+        req.session["user_id"] = user["id"];
         res.redirect("/urls");
     }
 });
 
 app.get("/login", (req, res) => {
-    if (req.cookies["user_id"]) {
+    if (req.session["user_id"]) {
         res.redirect("/urls");
     } else {
-        const templateVars = {user: users[req.cookies["user_id"]]};
+        const templateVars = {user: users[req.session["user_id"]]};
         res.render("urls_login", templateVars);
     }
 });
@@ -181,7 +183,7 @@ app.post("/login", (req, res) => {
     if (req.body.email === "" || req.body.password === "") {
         res.status(400).send('Invalid email or password');
     } else if (user && bcrypt.compareSync(req.body.password, user["password"])) {
-        res.cookie("user_id", user["id"]);
+        req.session["user_id"] = user["id"];
         res.redirect("/urls");
     } else {
         res.status(403).send('Email or password is incorrect');
