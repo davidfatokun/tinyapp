@@ -9,6 +9,7 @@ app.set("view engine", "ejs");
 
 app.use(express.urlencoded({extended: true}));
 
+// Our database of urls
 let urlDatabase = {
     "X7buRT": {
         longURL: "https://www.lighthouselabs.ca",
@@ -28,6 +29,7 @@ let urlDatabase = {
     },
 };
 
+// Our database of users
 let users = {
     "b2xVn2": {
         id: "b2xVn2",
@@ -41,16 +43,23 @@ let users = {
     },
 };
 
+// The ids of our users
 let secretKeys = Object.keys(users);
 app.use(cookieSession({
     name: 'session',
     keys: secretKeys,
 }));
 
+// GET homepage
 app.get("/", (req, res) => {
-    res.send("Hello!");
+    if (req.session["user_id"]) {
+        res.redirect("/urls");
+    } else {
+        res.redirect("/login");
+    }
 });
 
+// GET all created urls by logged-in user
 app.get("/urls", (req, res) => {
     if (req.session["user_id"]) {
         let urlData = urlsForId(req.session["user_id"], urlDatabase)
@@ -59,9 +68,9 @@ app.get("/urls", (req, res) => {
     } else {
         res.status(400).send('You Dont Have Access to the Data In This Link Without Being Logged In');
     }
-
 })
 
+// Create a new url for the logged-in user using a POST request
 app.post("/urls", (req, res) => {
     if (req.session["user_id"]) {
         let urlID = generateRandomString().toString();
@@ -72,6 +81,7 @@ app.post("/urls", (req, res) => {
     }
 });
 
+// GET the form to create a new url
 app.get("/urls/new", (req, res) => {
     if (req.session["user_id"]) {
         const templateVars = {user: users[req.session["user_id"]]};
@@ -81,6 +91,7 @@ app.get("/urls/new", (req, res) => {
     }
 });
 
+// GET the url with this id created by the logged-in user
 app.get("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
@@ -102,6 +113,7 @@ app.get("/urls/:id", (req, res) => {
     }
 });
 
+// Edit the url with this id created by the logged-in user using a POST request
 app.post("/urls/:id", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
@@ -119,6 +131,7 @@ app.post("/urls/:id", (req, res) => {
     }
 });
 
+// DELETE the url with this id created by the logged-in user using a POST request
 app.post("/urls/:id/delete", (req, res) => {
     if (req.session["user_id"]) {
         let userUrlKeys = Object.keys(urlsForId(req.session["user_id"], urlDatabase));
@@ -136,6 +149,7 @@ app.post("/urls/:id/delete", (req, res) => {
     }
 });
 
+// VISIT the url page, with its url assigned to this id created by the logged-in user
 app.get("/u/:id", (req, res) => {
     const longURL = urlDatabase[req.params.id]["longURL"];
     if (longURL === undefined) {
@@ -145,10 +159,7 @@ app.get("/u/:id", (req, res) => {
     }
 });
 
-app.get("/urls.json", (req, res) => {
-    res.json(urlDatabase);
-});
-
+// GET the form to register a new user
 app.get("/register", (req, res) => {
     if (req.session["user_id"]) {
         res.redirect("/urls");
@@ -158,6 +169,7 @@ app.get("/register", (req, res) => {
     }
 });
 
+// Create a new user using a POST request
 app.post("/register", (req, res) => {
     let user = getUserByEmail(req.body.email, users);
     if (req.body.email === "" || req.body.password === "") {
@@ -173,6 +185,7 @@ app.post("/register", (req, res) => {
     }
 });
 
+// GET the form to login a user account
 app.get("/login", (req, res) => {
     if (req.session["user_id"]) {
         res.redirect("/urls");
@@ -182,6 +195,7 @@ app.get("/login", (req, res) => {
     }
 });
 
+// Set the cookies for the user's session after a successful login
 app.post("/login", (req, res) => {
     let user = getUserByEmail(req.body.email, users);
     if (req.body.email === "" || req.body.password === "") {
@@ -194,6 +208,7 @@ app.post("/login", (req, res) => {
     }
 });
 
+// Logout the current user from
 app.post("/logout", (req, res) => {
     res.clearCookie("session");
     res.clearCookie("session.sig");
@@ -201,19 +216,7 @@ app.post("/logout", (req, res) => {
     res.redirect("/login");
 });
 
-app.get("/hello", (req, res) => {
-    res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/set", (req, res) => {
-    const a = 1;
-    res.send(`a = ${a}`);
-});
-
-app.get("/fetch", (req, res) => {
-    res.send(`a = ${a}`);
-});
-
+// Listen for any response from the client
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}!`);
 });
